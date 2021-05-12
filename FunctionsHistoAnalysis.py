@@ -316,31 +316,26 @@ def plotHistoStatistics(lowerThres, upperThres,lowerThresKurt , \
 
 def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, histometrics, input_plot_histograms, m_root):
 
-
-    #Bring dates
+    #Retrieve scenes dates
     bandnames=imageutils.getBandNames(VI_Image)
     print("Band names", bandnames)
     
-    
-    #First I open the image in gdal 
+    #Open the image in gdal
     RasterImage = gdal.Open(VI_Image)
     
-    #I create a copy of the image in which I will store the classified image
+    #Create a copy of the image in which I will store the classified image
     PixelClumps=driver.CreateCopy(Anom_class_image,RasterImage , strict=0)
     
-    
-    #I open the clumps image in gdal 
+    #Open the clumps image in gdal
     RasterClumps = gdal.Open(clumps_image)
     
     # Read the clumps image as an array
     ClumpsArray=RasterClumps.GetRasterBand(1).ReadAsArray()
-    
-    
+
     #Identify the total number of plots (clumps) available
     N_Segs = np.max(ClumpsArray)
     
-    
-    #Creating panda dataframes for lower and upper thresholds
+    #Creating panda dataframes to store lower and upper thresholds
     LowerArray = pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     UpperArray = pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     
@@ -354,7 +349,7 @@ def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, h
     upperThresCombArray=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     
     
-    #Creating panda dataframes for mean values of all the pixels within each crop plot
+    #Creating panda dataframes to store mean values of all the pixels within each crop plot
     meanValsArray=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     maxValsArray=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     minValsArray=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
@@ -367,7 +362,7 @@ def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, h
     percLowAnomaliesArray=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     percUpperAnomaliesArray=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     
-    #Creating panda dataframes for statistics of values within the normal distribution pf the plot
+    #Creating panda dataframes to store  statistics of values within the normal distribution pf the plot
     
     meanArray_ND=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
     maxArray_ND=pd.DataFrame(0, index=np.arange(1,N_Segs+1,1), columns=bandnames, dtype=np.float64)
@@ -383,25 +378,17 @@ def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, h
         arrayposit=band
         band += 1
         ImageArray=RasterImage.GetRasterBand(band).ReadAsArray()
-        
         band_name=bandnames[arrayposit]
             
         #Create a zero array that will overwrite PixelClumps-- IT might be moved outside the for when working with more plots
-            
         OutputArray = np.zeros_like(RasterClumps, dtype='uint8')
-        np.max(OutputArray)
-    
-           
-        ImageArray=RasterImage.GetRasterBand(band).ReadAsArray()
-        
-        #for clump in range(200, 220):
+
         for clump in range(1, N_Segs+1):
     
             Lowerlist = []
             Upperlist = []
     
             print("GETTING BAND: ",band_name, "band_number",band, "polygon",clump)
-    
     
             #Get raster band to be written
             PixelClumpsBand=PixelClumps.GetRasterBand(band)
@@ -413,18 +400,14 @@ def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, h
             
             if (minPixelVal == -999 or sizeArrayPixels<=5):
 
-
                 print("the clump", clump, "has a cloud")
                 # Apply classification thresholds to the output image:
                 OutputArray = np.where((OutputArray == 0) & (ClumpsArray == clump), -999, OutputArray)
 
                 #print("Hey guera do not forget to remove the #####")
                 PixelClumpsBand.WriteArray(OutputArray)
-        
-                #print("final output array /n", OutputArray)
-                
-                
-                
+
+
                 #Store the thresholds for each band and each date in a panda dataframe
         
                 LowerArray.loc[clump][str(band_name)] = -999
@@ -459,16 +442,13 @@ def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, h
                 skewArray_ND.loc[clump][str(band_name)]= -999
                 kurtArray_ND.loc[clump][str(band_name)]= -999
             else:
-                
-            
 
                 lowerThres, upperThres, lowerThresKurt, upperThresKurt, lowerThresSkew, upperThresSkew, lowerThresComb, upperThresComb, \
                 bin_edges, hist, binSize, maxPixelVal, minPixelVal, meanPixelVal, stdPixelVal, maxOptHist, minOptHist, meanOptHist,  \
                 stdOptHist, modeOptHist, kurtosisOptHist,  skewnessOptHist,PixelValsKurt, PixelValsSkew, numpixels, numLowAnomalies ,\
                 numUpperAnomalies,percLowAnomalies ,percUpperAnomalies=\
                     HistoThresholds(SegID=clump, ClumpsArray=ClumpsArray, ImageArray=ImageArray, m_root=m_root, band_name=band_name, input_plot_histograms=input_plot_histograms)
-                
-                
+
         
                 # Apply classification thresholds to the output image:
                 OutputArray = np.where((OutputArray == 0) & (ClumpsArray == clump) & (ImageArray < lowerThres), 1, OutputArray) # Classify pixels below lower threshold.
@@ -575,7 +555,6 @@ def multiplehistothresholds (VI_Image, clumps_image, Anom_class_image, driver, h
     stdArray_ND.to_hdf(histometrics,key='NormalPlotStats/NormalStd',mode='a',table=True, data_columns=True)
     skewArray_ND.to_hdf(histometrics,key='NormalPlotStats/NormalSkew',mode='a',table=True, data_columns=True)
     kurtArray_ND.to_hdf(histometrics,key='NormalPlotStats/NormalKurt',mode='a',table=True, data_columns=True)
-    
     
     #Store statistics for new histograms
     

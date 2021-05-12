@@ -57,44 +57,41 @@ gdalformat = 'KEA'
 Sensor = 'sen2'
 prefix='SEN2'
 
+#Folder with the stack VI raster. For each VI, the raster has as many bands as scenes available
 StackVIFolder=m_root+'/StacksVIs'
+
+#Folder to store in-field anomalies raster
 AnomaliesPath=m_root+'/Anomalies/'
 
 ## List of all the VIs to be analised
+# The user has to produce each VI raster in advance
 VIList=['NDVI8A','NDVI8','EVI8A','EVI8', 'GCI8A', 'GCI8','GNDVI8A', 'GNDVI8','RECI8A_RE_B5', 'RECI8A_RE_B6',  'RECI8A_RE_B7', 'RECI8_RE_B5', 'RECI8_RE_B6',  'RECI8_RE_B7', \
         'RENDVI8A_RE_B5', 'RENDVI8A_RE_B6','RENDVI8A_RE_B7', 'RENDVI8_RE_B5', 'RENDVI8_RE_B6','RENDVI8_RE_B7', 'SAVI8A','SAVI8',\
         'NDWI8_SWIR1', 'NDWI8_SWIR2', 'NDWI8A_SWIR1', 'NDWI8A_SWIR2']
 
-
+# Raster with rasterised crop plots. User has to create a raster with the plots in advance
+clumps_image = m_root + '/Extents/Plots_Escobal_20191023_S2.kea'
 
 # Asks the user if she/he wants to plot the histograms
 input_plot_histograms=input(" Do you want to plot the histograms Y/N: ")
+driver = gdal.GetDriverByName(gdalformat)
 
-
-
-def histAnalysis():
+def histAnalysis(clumps_image,prefix,AnomaliesPath,StackVIFolder,m_root, driver,input_plot_histograms):
     print("\n HISTOGRAM ANALYSIS started at", datetime.datetime.now()," \n")
     import FunctionsHistoAnalysis
-    driver = gdal.GetDriverByName(gdalformat)
-    
 
-    #Raster with rasterised crop plots
-    clumps_image=m_root+'/Extents/Plots_Escobal_20191023_S2.kea'
-
+    # Goes through all the VI images available
     for VI in VIList:
-
         print("Running histogram analysis over ", VI, "images")
 
         #Output Anomalies VI_Image (For current Vegetation Index)
-        Anom_class_image=m_root+'/Anomalies/'+prefix+'_'+VI+'stack_Anom.kea'
+        Anom_class_image=AnomaliesPath+'/'+prefix+'_'+VI+'stack_Anom.kea'
 
-        #Stack VI image
-        VI_Image =m_root+'/StacksVIs/'+prefix+'_'+VI+'_stack.kea'
-        bandnames=imageutils.getBandNames(VI_Image)
-
+        #Current Stack VI image
+        VI_Image =StackVIFolder+'/'+prefix+'_'+VI+'_stack.kea'
 
         #HDF5 file that will store plots statistics
-        histometrics=m_root+"/Anomalies/"+prefix+"_"+"HistoMetrics"+VI+".hdf5"
+        histometrics=AnomaliesPath+'/'+prefix+"_"+"HistoMetrics"+VI+".hdf5"
 
         #####################################
         # ££££ Run the function ££££ #        
